@@ -12,7 +12,8 @@ int main(int argc, char* argv[])
 
     if(argc < 3)
     {
-        syslog(LOG_ERR, "Error: File path and text string arguments not provided.");
+        printf("Error: File path and text string arguments not provided");
+        syslog(LOG_ERR, "Error: File path and text string arguments not provided");
         return 1;
     }
     else
@@ -29,8 +30,9 @@ int main(int argc, char* argv[])
 
         if(fd == -1 || nr != strlen(writestr))
         {
-            printf("Write fail");
+            printf("Error writing %s to file %s", writestr, writefile);
             syslog(LOG_ERR, "Error writing %s to file %s", writestr, writefile);
+            return 1;
         }
         close(fd);
     }
