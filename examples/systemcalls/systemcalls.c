@@ -1,4 +1,8 @@
 #include "systemcalls.h"
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <fcntl.h>
 
 /**
  * @param cmd the command to execute with system()
@@ -16,6 +20,12 @@ bool do_system(const char *cmd)
  *   and return a boolean true if the system() call completed with success
  *   or false() if it returned a failure
 */
+    int status = system(cmd);
+    if(status == -1)
+    {
+        perror("system");
+        return false;
+    }
 
     return true;
 }
@@ -45,9 +55,6 @@ bool do_exec(int count, ...)
         command[i] = va_arg(args, char *);
     }
     command[count] = NULL;
-    // this line is to avoid a compile warning before your implementation is complete
-    // and may be removed
-    command[count] = command[count];
 
 /*
  * TODO:
@@ -58,6 +65,37 @@ bool do_exec(int count, ...)
  *   as second argument to the execv() command.
  *
 */
+    int status;
+    pid_t pid;
+
+    pid = fork();
+    if(pid == -1)
+    {
+        perror("fork");
+        return false;
+    }
+    else if(pid>0)
+    {
+        if(waitpid(pid, &status, 0) == -1)
+        {
+            perror("waitpid");
+            return false;
+        }
+        else if(WEXITSTATUS(status) != 0)
+        {
+            return false;
+        }
+    }
+    else if(!pid)
+    {
+        int ret;
+        ret = execv(command[0], command);
+        if(ret == -1)
+        {
+            perror("execv");
+            exit(EXIT_FAILURE);
+        }
+    }
 
     va_end(args);
 
@@ -80,10 +118,6 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
         command[i] = va_arg(args, char *);
     }
     command[count] = NULL;
-    // this line is to avoid a compile warning before your implementation is complete
-    // and may be removed
-    command[count] = command[count];
-
 
 /*
  * TODO
@@ -92,6 +126,53 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *   The rest of the behaviour is same as do_exec()
  *
 */
+
+    int fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
+    if(fd == -1)
+    {
+        perror("open");
+        return false;
+    }
+
+    int status;
+    pid_t pid;
+    pid = fork();
+    if(pid == -1)
+    {
+        perror("fork");
+        close(fd);
+        return false;
+    }
+    else if(pid>0)
+    {
+        close(fd);
+        if(waitpid(pid, &status, 0) == -1)
+        {
+            perror("waitpid");
+            return false;
+        }
+        else if(WEXITSTATUS(status) != 0)
+        {
+            return false;
+        }
+    }
+    else if(!pid)
+    {
+        if(dup2(fd, 1) == -1)
+        {
+            perror("dup2");
+            exit(EXIT_FAILURE);
+        }
+        close(fd);
+
+        int ret;
+        ret = execv(command[0], command);
+        if(ret == -1)
+        {
+            perror("execv");
+            exit(EXIT_FAILURE);
+        }
+    }
 
     va_end(args);
 
