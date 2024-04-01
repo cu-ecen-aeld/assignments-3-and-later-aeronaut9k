@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 if [ $# -ne 2 ]; then
     echo "Error: Incorrect number of arguments. Number of arguments must be 2."
@@ -10,8 +10,8 @@ searchstr=$2
 
 if [ -d $filesdir ]
 then
-    X=($(find $filesdir -type f | wc -l))
-    Y=($(grep -r $searchstr $filesdir | wc -l))
+    X=$(find $filesdir -type f | wc -l)
+    Y=$(grep -r $searchstr $filesdir | wc -l)
     echo "The number of files are $X and the number of matching lines are $Y"
     exit 0
 else
