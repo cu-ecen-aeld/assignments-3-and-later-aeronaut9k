@@ -1,9 +1,7 @@
 default:
-ifeq ($(CROSS_COMPILE), aarch64-none-linux-gnu-)
-	aarch64-none-linux-gnu-gcc -o writer writer.c
-else
-	gcc -o writer writer.c
-endif
+	$(CROSS_COMPILE)$(CC) -o writer writer.c
+
+all: default
 
 .PHONY : clean
 clean:
